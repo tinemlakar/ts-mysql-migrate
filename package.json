@@ -1,0 +1,33 @@
+{
+  "name": "mysql-migrate",
+  "version": "1.0.0",
+  "description": "Library for MySQL migrations",
+  "declaration": true,
+  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "test",
+    "prepublish": "npm run build",
+    "lint": "tslint 'src/**/*.ts?(x)'",
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tinemlakar/mysql-migrate.git"
+  },
+  "keywords": [
+    "mysql",
+    "migrations",
+    "sql",
+    "database"
+  ],
+  "author": "Tine Mlakar",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tinemlakar/mysql-migrate/issues"
+  },
+  "homepage": "https://github.com/tinemlakar/mysql-migrate#readme",
+  "devDependencies": {
+    "typescript": "^3.7.5"
+  }
+}
