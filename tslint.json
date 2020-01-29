@@ -23,11 +23,6 @@
       }
     ],
     "adjacent-overload-signatures": true,
-    "prefer-function-over-method": [
-      true,
-      "allow-public",
-      "allow-protected"
-    ],
     "no-this-assignment": true,
     "unnecessary-constructor": true,
     "no-duplicate-super": true,

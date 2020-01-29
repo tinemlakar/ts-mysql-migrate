@@ -9,7 +9,7 @@
     "build": "tsc",
     "test": "test",
     "prepublish": "npm run build",
-    "lint": "tslint 'src/**/*.ts?(x)'",
+    "lint": "tslint 'src/**/*.ts?(x)'"
   },
   "repository": {
     "type": "git",
@@ -28,6 +28,13 @@
   },
   "homepage": "https://github.com/tinemlakar/mysql-migrate#readme",
   "devDependencies": {
+    "@types/globby": "^9.1.0",
+    "@types/mysql": "^2.15.8",
+    "@types/mysql2": "github:types/mysql2",
     "typescript": "^3.7.5"
+  },
+  "dependencies": {
+    "globby": "^11.0.0",
+    "mysql2": "^2.1.0"
   }
 }
