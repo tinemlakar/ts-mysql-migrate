@@ -10,6 +10,7 @@
     "build": "tsc",
     "test": "test",
     "prepublish": "npm run build",
+    "install": "npm run build",
     "lint": "tslint 'src/**/*.ts?(x)'"
   },
   "repository": {
