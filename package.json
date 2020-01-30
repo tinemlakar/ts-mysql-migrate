@@ -9,9 +9,10 @@
   "scripts": {
     "build": "tsc",
     "test": "test",
+    "prepare": "npm run build",
     "prepublish": "npm run build",
     "install": "npm run build",
-    "lint": "tslint 'src/**/*.ts?(x)'"
+    "lint": "tslint -p tsconfig.json"
   },
   "repository": {
     "type": "git",
