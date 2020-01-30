@@ -27,7 +27,7 @@ export class Migration {
   /**
    * up
    */
-  public async up(steps: number) {
+  public async up(steps?: number) {
     // get files to execute
     if (!steps || steps < 0) {
       steps = 9999;
