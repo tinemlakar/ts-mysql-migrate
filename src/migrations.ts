@@ -2,7 +2,7 @@ import * as mysql from 'mysql2/promise';
 import globby from 'globby';
 
 export interface MigrationConfig {
-  db: mysql.Pool | mysql.Connection;
+  db: mysql.Pool | mysql.Connection | mysql.PoolConnection;
   tableName: string;
   dir?: string;
 }

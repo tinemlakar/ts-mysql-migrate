@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Library for MySQL migrations",
   "declaration": true,
-  "files": ["dist/**/*"],
+  "files": [
+    "dist/**/*"
+  ],
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
   "scripts": {
@@ -36,6 +38,7 @@
   },
   "devDependencies": {
     "@types/globby": "^9.1.0",
+    "@types/node": "^13.5.3",
     "typescript": "^3.7.5"
   }
 }
