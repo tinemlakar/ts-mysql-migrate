@@ -1,5 +1,6 @@
-import * as mysql from 'mysql2/promise';
-import globby from 'globby';
+import * as mysql from 'mysql';
+import * as globby from 'globby';
+import { promisify } from 'util';
 
 export interface MigrationConfig {
   db: mysql.Pool | mysql.Connection | mysql.PoolConnection;
@@ -132,7 +133,7 @@ export class Migration {
 
   private async initMigrationTable() {
     try {
-      await this.config.db.execute(`
+      await this.query(`
         CREATE TABLE IF NOT EXISTS ${this.config.tableName} (
           version INT NULL,
           date DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -146,7 +147,7 @@ export class Migration {
   }
 
   private async getlastVersion(): Promise<number> {
-    return await this.config.db.query(
+    return await this.query(
       `SELECT version
       FROM ${this.config.tableName}
       ORDER BY version DESC
@@ -154,17 +155,22 @@ export class Migration {
   }
 
   private async updateVersion(script: MigrationScripts) {
-    return await this.config.db.execute(
+    return await this.query(
       `INSERT INTO ${this.config.tableName} (version)
        VALUES (${script.version})
       `);
   }
 
   private async deleteVersion(script: MigrationScripts) {
-    return await this.config.db.execute(
+    return await this.query(
       `DELETE FROM ${this.config.tableName}
        WHERE version = ${script.version}
       `);
+  }
+
+  private query(query: string, values?: any): Promise<Array<any>> {
+    const q = promisify(this.config.db.query).bind(this.config.db);
+    return q(query, values);
   }
 
 }
