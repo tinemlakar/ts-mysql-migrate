@@ -1,4 +1,3 @@
-import * as mysql from 'mysql';
 import * as globby from 'globby';
 import { promisify } from 'util';
 import { QueryFunction } from 'mysql';
@@ -15,8 +14,8 @@ export interface MigrationConfig {
 
 export interface MigrationScripts {
   version: number;
-  upgrade?(conn?: mysql.Connection): (any | Promise<any>);
-  downgrade?(conn?: mysql.Connection): (any | Promise<any>);
+  upgrade?(conn?: MigrationConnection): (any | Promise<any>);
+  downgrade?(conn?: MigrationConnection): (any | Promise<any>);
 }
 
 export class Migration {
