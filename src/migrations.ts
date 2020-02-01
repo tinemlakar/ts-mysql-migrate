@@ -14,8 +14,8 @@ export interface MigrationConfig {
 
 export interface MigrationScripts {
   version: number;
-  upgrade?(conn?: MigrationConnection): (any | Promise<any>);
-  downgrade?(conn?: MigrationConnection): (any | Promise<any>);
+  upgrade?(queryFn?: (query: string, value: any[]) => Promise<Array<any>>): (any | Promise<any>);
+  downgrade?(queryFn?: (query: string, value: any[]) => Promise<Array<any>>): (any | Promise<any>);
 }
 
 export class Migration {
@@ -47,7 +47,7 @@ export class Migration {
         }
       } else if (script.upgrade) {
         // execute
-        await script.upgrade(this.config.conn);
+        await script.upgrade(this.query);
         await this.updateVersion(script);
       }
       countStep++;
@@ -73,7 +73,7 @@ export class Migration {
         }
       } else if (script.downgrade) {
         // execute
-        await script.downgrade(this.config.conn);
+        await script.downgrade(this.query);
         await this.deleteVersion(script);
       }
       countStep++;
