@@ -1,9 +1,14 @@
 import * as mysql from 'mysql';
 import * as globby from 'globby';
 import { promisify } from 'util';
+import { QueryFunction } from 'mysql';
+
+export interface MigrationConnection {
+  query: QueryFunction;
+}
 
 export interface MigrationConfig {
-  conn: mysql.Connection;
+  conn: MigrationConnection;
   tableName: string;
   dir?: string;
 }
