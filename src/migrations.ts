@@ -22,17 +22,25 @@ export class Migration {
   private config: MigrationConfig;
   private scripts: MigrationScripts[] = [];
   private maxVersion = 0;
+  private isInit = false;
 
   public constructor(config: MigrationConfig) {
     this.config = config;
-    this.loadScripts(this.config.dir || 'migrations');
-    this.initMigrationTable();
+    this.isInit = false;
   }
 
+  public async initialize() {
+    await this.loadScripts(this.config.dir || 'migrations');
+    await this.initMigrationTable();
+    this.isInit = true;
+  }
   /**
    * up
    */
   public async up(steps?: number) {
+    if (!this.isInit) {
+      throw new Error('Migration class not initailized! Run initialize function first!');
+    }
     // get files to execute
     if (!steps || steps < 0) {
       steps = 9999;
@@ -59,6 +67,9 @@ export class Migration {
    * down
    */
   public async down(steps = 1) {
+    if (!this.isInit) {
+      throw new Error('Migration class not initailized! Run initialize function first!');
+    }
     // get files to execute
     if (!steps || steps < 0) {
       steps = 9999;
