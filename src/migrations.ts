@@ -47,7 +47,7 @@ export class Migration {
         }
       } else if (script.upgrade) {
         // execute
-        await script.upgrade();
+        await script.upgrade(this.config.conn);
         await this.updateVersion(script);
       }
       countStep++;
@@ -73,7 +73,7 @@ export class Migration {
         }
       } else if (script.downgrade) {
         // execute
-        await script.downgrade();
+        await script.downgrade(this.config.conn);
         await this.deleteVersion(script);
       }
       countStep++;
