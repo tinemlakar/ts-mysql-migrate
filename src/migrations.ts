@@ -169,7 +169,7 @@ export class Migration {
   }
 
   private query(query: string, values?: any): Promise<Array<any>> {
-    const q = promisify(this.config.conn.query).bind(this.config.db);
+    const q = promisify(this.config.conn.query).bind(this.config.conn);
     return q(query, values);
   }
 
