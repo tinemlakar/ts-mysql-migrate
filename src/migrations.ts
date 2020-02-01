@@ -3,15 +3,15 @@ import * as globby from 'globby';
 import { promisify } from 'util';
 
 export interface MigrationConfig {
-  db: mysql.Pool | mysql.Connection | mysql.PoolConnection;
+  conn: mysql.Connection;
   tableName: string;
   dir?: string;
 }
 
 export interface MigrationScripts {
   version: number;
-  upgrade?(db?: mysql.Pool): (any | Promise<any>);
-  downgrade?(db?: mysql.Pool): (any | Promise<any>);
+  upgrade?(conn?: mysql.Connection): (any | Promise<any>);
+  downgrade?(conn?: mysql.Connection): (any | Promise<any>);
 }
 
 export class Migration {
@@ -169,7 +169,7 @@ export class Migration {
   }
 
   private query(query: string, values?: any): Promise<Array<any>> {
-    const q = promisify(this.config.db.query).bind(this.config.db);
+    const q = promisify(this.config.conn.query).bind(this.config.db);
     return q(query, values);
   }
 
