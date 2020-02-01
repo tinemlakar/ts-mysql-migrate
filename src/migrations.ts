@@ -1,4 +1,5 @@
-import * as globby from 'globby';
+// import * as globby from 'globby';
+import * as fs from 'fs';
 import { promisify } from 'util';
 import { QueryFunction } from 'mysql';
 
@@ -100,14 +101,17 @@ export class Migration {
     await this.down(-1);
   }
 
-  private async loadScripts(dir: string) {
-    const files = await globby([dir]);
-    let ver = 1;
+  private async loadScripts(dirPath: string) {
+    // const files = await globby([dirPath]);
 
+    const files = await promisify(fs.readdir)(dirPath);
+    let ver = 1;
+    // debugger;
     files.sort().forEach((file) => {
       let script;
-      try { script = require(file); } catch (e) {
-        console.log(`Unable to load script from ${file}`);
+      console.log(__dirname);
+      try { script = require(`./${dirPath + file}`); } catch (e) {
+        console.log(`Unable to load script from ${file}! (${e})`);
       }
 
       const isValid = (
