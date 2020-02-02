@@ -62,11 +62,10 @@ export class Migration {
     console.log('Starting upgrade migration!');
 
     // get files to execute
-    if (!steps || steps < 0) {
-      steps = 9999;
-    }
+    const infinite = (!steps || steps < 0);
+
     let countStep = 0;
-    while (countStep < steps) {
+    while (infinite || countStep < steps) {
       const script = await this.getNextUpgradeScript();
       if (!script) {
         const ver = await this.getlastVersion();
@@ -102,11 +101,10 @@ export class Migration {
     console.log('Starting downgrade migration!');
 
     // get files to execute
-    if (!steps || steps < 0) {
-      steps = 9999;
-    }
+    const infinite = (!steps || steps < 0);
+
     let countStep = 0;
-    while (countStep < steps) {
+    while (infinite || countStep < steps) {
       const script = await this.getNextDowngradeScript();
       if (!script) {
         const ver = await this.getlastVersion();
@@ -133,7 +131,6 @@ export class Migration {
    * Run all downgrade scripts and then all upgrade scripts
    */
   public async reset() {
-    // run all down migrations
     await this.down(-1);
     await this.up();
   }
