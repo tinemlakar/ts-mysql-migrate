@@ -10,7 +10,14 @@ export interface MigrationConnection {
 export interface MigrationConfig {
   conn: MigrationConnection;
   tableName: string;
-  dir?: string;
+  /**
+   * path to migration dir relative to module root
+   */
+  dir: string;
+  /**
+   * path to migration dir relative to current file
+   */
+  pathToScripts: string;
 }
 
 export interface MigrationScripts {
@@ -56,7 +63,7 @@ export class Migration {
         }
       } else if (script.upgrade) {
         // execute
-        await script.upgrade(this.query);
+        await script.upgrade(this.query.bind(this));
         await this.updateVersion(script);
       }
       countStep++;
@@ -85,7 +92,7 @@ export class Migration {
         }
       } else if (script.downgrade) {
         // execute
-        await script.downgrade(this.query);
+        await script.downgrade(this.query.bind(this));
         await this.deleteVersion(script);
       }
       countStep++;
@@ -109,8 +116,8 @@ export class Migration {
     // debugger;
     files.sort().forEach((file) => {
       let script;
-      console.log(__dirname);
-      try { script = require(`./${dirPath + file}`); } catch (e) {
+      // console.log(__dirname);
+      try { script = module.parent.parent.require(`${ this.config.pathToScripts + file}`); } catch (e) {
         console.log(`Unable to load script from ${file}! (${e})`);
       }
 
