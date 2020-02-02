@@ -1,12 +1,13 @@
 import { Migration } from '../src/index';
-import { createPool, PoolConfig } from 'mysql';
+import { createPool, ConnectionOptions } from 'mysql2';
+import * as mysql from 'mysql';
 require('dotenv').config();
 
 let migration: Migration;
 
 beforeAll(async () => {
 
-  const poolConfig: PoolConfig = {
+  const poolConfig: ConnectionOptions = {
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT),
     user: process.env.DB_USER,
@@ -20,7 +21,7 @@ beforeAll(async () => {
   const pool = createPool(poolConfig);
 
   migration = new Migration({
-    conn: pool,
+    conn: pool as unknown as mysql.Connection,
     tableName: 'migrations',
     dir: `./test/migration-scripts/`
   });

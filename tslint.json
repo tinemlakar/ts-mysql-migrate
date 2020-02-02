@@ -188,6 +188,7 @@
     ],
     "no-empty": true,
     "no-sparse-arrays": true,
-    "ban-comma-operator": true
+    "ban-comma-operator": true,
+    "no-floating-promises": true
   }
 }
