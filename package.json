@@ -32,11 +32,9 @@
   "homepage": "https://github.com/tinemlakar/mysql-migrate#readme",
   "dependencies": {
     "@types/mysql": "^2.15.8",
-    "globby": "^11.0.0",
     "mysql": "^2.18.1"
   },
   "devDependencies": {
-    "@types/globby": "^9.1.0",
     "@types/node": "^13.5.3",
     "typescript": "^3.7.5"
   }
