@@ -135,6 +135,14 @@ export class Migration {
     await this.up();
   }
 
+  public async getlastVersion(): Promise<number> {
+    return await this.query(
+      `SELECT version
+      FROM ${this.config.tableName}
+      ORDER BY version DESC
+      LIMIT 1`, null, true).then((val: any) => !!val && val.length ? val[0].version : 0);
+  }
+
   private async loadScripts(dirPath: string) {
     const files = await promisify(fs.readdir)(dirPath);
     let ver = 1;
@@ -193,14 +201,6 @@ export class Migration {
       throw new Error(err);
     }
 
-  }
-
-  private async getlastVersion(): Promise<number> {
-    return await this.query(
-      `SELECT version
-      FROM ${this.config.tableName}
-      ORDER BY version DESC
-      LIMIT 1`, null, true).then((val: any) => !!val && val.length ? val[0].version : 0);
   }
 
   private async updateVersion(script: MigrationScripts) {
