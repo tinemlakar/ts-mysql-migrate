@@ -31,13 +31,10 @@
   },
   "homepage": "https://github.com/tinemlakar/mysql-migrate#readme",
   "dependencies": {
-    "globby": "^11.0.0",
-    "mysql2": "^2.1.0",
     "@types/mysql": "^2.15.8",
-    "@types/mysql2": "github:types/mysql2"
+    "mysql": "^2.18.1"
   },
   "devDependencies": {
-    "@types/globby": "^9.1.0",
     "@types/node": "^13.5.3",
     "typescript": "^3.7.5"
   }

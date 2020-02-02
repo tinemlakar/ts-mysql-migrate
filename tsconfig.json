@@ -1,12 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "lib": ["es2017", "es7", "es6", "dom"],
-    "declaration": true,
+    "target": "es6",
     "outDir": "dist",
-    "strict": true,
-    "esModuleInterop": true
+    "module": "commonjs",
+    "declaration": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "removeComments": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "inlineSources": true,
+    "experimentalDecorators": true,   
+    "emitDecoratorMetadata": true,
+    "plugins": [
+      { "name": "typescript-tslint-plugin" }
+    ]
   },
   "include": [
     "src/**/*"
