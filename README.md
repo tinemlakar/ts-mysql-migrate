@@ -19,9 +19,8 @@ SOFTWARE.
 
 ## Installation
 
-*TODO: publish to NPM* 
 ```ssh
-npm i tinemlakar/mysql-migrate
+npm i ts-mysql-migrate
 ```
 ## API
 
