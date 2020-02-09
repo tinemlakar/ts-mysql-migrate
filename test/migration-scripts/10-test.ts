@@ -1,11 +1,11 @@
 export async function upgrade(queryFn: (query: string, values?: any[]) => Promise<Array<any>>) {
   await queryFn(`
-    CREATE TABLE TEST (ID INTEGER NULL, NAME VARCHAR(20) NULL);
+    INSERT INTO TEST VALUES (10, 'Test');
   `);
 }
 
 export async function downgrade(queryFn: (query: string, values?: any[]) => Promise<Array<any>>) {
   await queryFn(`
-    DROP TABLE TEST;
+    DELETE FROM TEST WHERE ID = 10;
   `);
 }

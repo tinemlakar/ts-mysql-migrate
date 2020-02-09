@@ -4,10 +4,16 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { QueryFunction } from 'mysql';
 
+/**
+ * Database connection interface
+ */
 export interface MigrationConnection {
   query: QueryFunction;
 }
 
+/**
+ * Config interface
+ */
 export interface MigrationConfig {
   /**
    * DB connection object
@@ -24,15 +30,19 @@ export interface MigrationConfig {
 
 }
 
-export interface MigrationScripts {
+/**
+ * Migration script interface
+ */
+export interface MigrationScript {
   version: number;
+  fileName: string;
   upgrade?(queryFn?: (query: string, value: any[]) => Promise<Array<any>>): (any | Promise<any>);
   downgrade?(queryFn?: (query: string, value: any[]) => Promise<Array<any>>): (any | Promise<any>);
 }
 
 export class Migration {
   private config: MigrationConfig;
-  private scripts: MigrationScripts[] = [];
+  private scripts: MigrationScript[] = [];
   private maxVersion = 0;
   private isInit = false;
 
@@ -80,7 +90,7 @@ export class Migration {
         console.log(`Step: ${countStep + 1}`);
         console.log(`Upgrading to version ${script.version}...`);
         await script.upgrade(this.query.bind(this));
-        await this.updateVersion(script);
+        await this.saveVersion(script);
         console.log(`DB upgraded to version : ${script.version}`);
       }
       countStep++;
@@ -135,6 +145,9 @@ export class Migration {
     await this.up();
   }
 
+  /**
+   * Returns last version of database
+   */
   public async getlastVersion(): Promise<number> {
     return await this.query(
       `SELECT version
@@ -143,11 +156,17 @@ export class Migration {
       LIMIT 1`, null, true).then((val: any) => !!val && val.length ? val[0].version : 0);
   }
 
+  /**
+   * Loads scripts from file system
+   */
   private async loadScripts(dirPath: string) {
     const files = await promisify(fs.readdir)(dirPath);
     let ver = 1;
 
-    files.sort().forEach((file) => {
+    const fileArr = files.sort(this.sortFiles);
+    console.log(`Found migration scripts: ${fileArr.join(', ')}`);
+
+    fileArr.forEach((file) => {
       let script;
       try { script = module.parent.parent.require(path.resolve(process.cwd(), dirPath, file)); } catch (e) {
         console.log(`Unable to load script from ${file}! (${e})`);
@@ -161,6 +180,7 @@ export class Migration {
 
       if (isValid) {
         script.version = ver;
+        script.fileName = file;
         this.scripts.push(script);
         this.maxVersion = ver;
         ver++;
@@ -168,7 +188,10 @@ export class Migration {
     });
   }
 
-  private async getNextUpgradeScript() {
+  /**
+   * Returns next upgrade script object
+   */
+  private async getNextUpgradeScript(): Promise<MigrationScript> {
     const ver = await this.getlastVersion();
     for (const script of this.scripts) {
       if (script.version === (ver + 1)) {
@@ -178,7 +201,10 @@ export class Migration {
     return null;
   }
 
-  private async getNextDowngradeScript() {
+  /**
+   * Returns next downgrade script object
+   */
+  private async getNextDowngradeScript(): Promise<MigrationScript> {
     const ver = await this.getlastVersion();
     for (const script of this.scripts) {
       if (script.version === (ver)) {
@@ -188,11 +214,15 @@ export class Migration {
     return null;
   }
 
+  /**
+   * If needed, creates datbase table for version tracking
+   */
   private async initMigrationTable() {
     try {
       await this.query(`
         CREATE TABLE IF NOT EXISTS ${this.config.tableName} (
           version INT NULL,
+          fileName VARCHAR(256),
           date DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `, null, true);
@@ -203,26 +233,55 @@ export class Migration {
 
   }
 
-  private async updateVersion(script: MigrationScripts) {
+  /**
+   * Saves version of database into migration table
+   */
+  private async saveVersion(script: MigrationScript) {
     return await this.query(
-      `INSERT INTO ${this.config.tableName} (version)
-       VALUES (${script.version})
+      `INSERT INTO ${this.config.tableName} (version, fileName)
+       VALUES (${script.version}, '${script.fileName}')
       `, null, true);
   }
 
-  private async deleteVersion(script: MigrationScripts) {
+  /**
+   * deletes version from database
+   */
+  private async deleteVersion(script: MigrationScript) {
     return await this.query(
       `DELETE FROM ${this.config.tableName}
        WHERE version = ${script.version}
       `, null, true);
   }
 
+  /**
+   * Allows async calls of native query function
+   */
   private query(query: string, values?: any, silent = false): Promise<Array<any>> {
     const q = promisify(this.config.conn.query).bind(this.config.conn);
     if (!silent) {
       console.log(query);
     }
     return q(query, values);
+  }
+
+  /**
+   * Sort migration files by prepending numbers.
+   */
+  private sortFiles(a: string, b: string): number {
+    const verA = a.match( /^(\d*)-/ )[1];
+    const verB = b.match( /^(\d*)-/ )[1];
+
+    if (!parseInt(verA) || !parseInt(verB)) {
+      return 0;
+    }
+
+    if (parseInt(verA) > parseInt(verB)) {
+      return 1;
+    }
+    if (parseInt(verA) < parseInt(verB)) {
+      return -1;
+    }
+    return 0;
   }
 
 }
