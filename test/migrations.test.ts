@@ -36,33 +36,33 @@ afterAll(async () => {
 
 });
 
-test('Test upgrede migrations', async () => {
+test('Test upgrade migrations', async () => {
   await migration.up();
-  const version = await migration.getlastVersion();
+  const version = await migration.getLastVersion();
   expect(version).toBe(4);
 });
 
 test('Test downgrade migrations', async () => {
   await migration.down();
-  const version = await migration.getlastVersion();
+  const version = await migration.getLastVersion();
   expect(version).toBe(3);
 });
 
 test('Test downgrade two migration', async () => {
   await migration.up();
   await migration.down(2);
-  const version = await migration.getlastVersion();
+  const version = await migration.getLastVersion();
   expect(version).toBe(2);
 });
 
 test('Test upgrade one migration', async () => {
   await migration.up(1);
-  const version = await migration.getlastVersion();
+  const version = await migration.getLastVersion();
   expect(version).toBe(3);
 });
 
 test('Test reset', async () => {
   await migration.reset();
-  const version = await migration.getlastVersion();
+  const version = await migration.getLastVersion();
   expect(version).toBe(4);
 });

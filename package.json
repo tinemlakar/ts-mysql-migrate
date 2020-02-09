@@ -1,5 +1,5 @@
 {
-  "name": "mysql-migrate",
+  "name": "ts-mysql-migrate",
   "version": "1.0.0",
   "description": "Library for MySQL migrations",
   "declaration": true,

@@ -1,4 +1,3 @@
-// import * as globby from 'globby';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
@@ -66,7 +65,7 @@ export class Migration {
    */
   public async up(steps?: number) {
     if (!this.isInit) {
-      throw new Error('Migration class not initailized! Run initialize function first!');
+      throw new Error('Migration class not initialized! Run initialize function first!');
     }
 
     console.log('Starting upgrade migration!');
@@ -78,7 +77,7 @@ export class Migration {
     while (infinite || countStep < steps) {
       const script = await this.getNextUpgradeScript();
       if (!script) {
-        const ver = await this.getlastVersion();
+        const ver = await this.getLastVersion();
         if (ver != this.maxVersion) {
           throw new Error('Next upgrade script not found!');
         } else {
@@ -105,7 +104,7 @@ export class Migration {
    */
   public async down(steps = 1) {
     if (!this.isInit) {
-      throw new Error('Migration class not initailized! Run initialize function first!');
+      throw new Error('Migration class not initialized! Run initialize function first!');
     }
 
     console.log('Starting downgrade migration!');
@@ -117,7 +116,7 @@ export class Migration {
     while (infinite || countStep < steps) {
       const script = await this.getNextDowngradeScript();
       if (!script) {
-        const ver = await this.getlastVersion();
+        const ver = await this.getLastVersion();
         if (ver) {
           throw new Error('Next downgrade script not found!');
         } else {
@@ -148,7 +147,7 @@ export class Migration {
   /**
    * Returns last version of database
    */
-  public async getlastVersion(): Promise<number> {
+  public async getLastVersion(): Promise<number> {
     return await this.query(
       `SELECT version
       FROM ${this.config.tableName}
@@ -192,7 +191,7 @@ export class Migration {
    * Returns next upgrade script object
    */
   private async getNextUpgradeScript(): Promise<MigrationScript> {
-    const ver = await this.getlastVersion();
+    const ver = await this.getLastVersion();
     for (const script of this.scripts) {
       if (script.version === (ver + 1)) {
         return script;
@@ -205,7 +204,7 @@ export class Migration {
    * Returns next downgrade script object
    */
   private async getNextDowngradeScript(): Promise<MigrationScript> {
-    const ver = await this.getlastVersion();
+    const ver = await this.getLastVersion();
     for (const script of this.scripts) {
       if (script.version === (ver)) {
         return script;
@@ -215,7 +214,7 @@ export class Migration {
   }
 
   /**
-   * If needed, creates datbase table for version tracking
+   * If needed, creates database table for version tracking
    */
   private async initMigrationTable() {
     try {
@@ -265,7 +264,7 @@ export class Migration {
   }
 
   /**
-   * Sort migration files by prepending numbers.
+   * Sort migration files by prefix numbers.
    */
   private sortFiles(a: string, b: string): number {
     const verA = a.match( /^(\d*)-/ )[1];
