@@ -8,7 +8,6 @@
     "url": "https://github.com/tinemlakar/ts-mysql-migrate/issues"
   },
   "homepage": "https://github.com/tinemlakar/ts-mysql-migrate#readme",
-  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tinemlakar/ts-mysql-migrate.git"
