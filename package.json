@@ -2,6 +2,23 @@
   "name": "ts-mysql-migrate",
   "version": "1.0.1",
   "description": "Library for MySQL migrations",
+  "author": "Tine Mlakar",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tinemlakar/ts-mysql-migrate/issues"
+  },
+  "homepage": "https://github.com/tinemlakar/ts-mysql-migrate#readme",
+  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tinemlakar/ts-mysql-migrate.git"
+  },
+  "keywords": [
+    "mysql",
+    "migrations",
+    "sql",
+    "database"
+  ],
   "declaration": true,
   "files": [
     "dist/**/*"
@@ -14,22 +31,6 @@
     "prepare": "npm run build",
     "lint": "tslint -p tsconfig.json"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tinemlakar/ts-mysql-migrate.git"
-  },
-  "keywords": [
-    "mysql",
-    "migrations",
-    "sql",
-    "database"
-  ],
-  "author": "Tine Mlakar",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/tinemlakar/ts-mysql-migrate/issues"
-  },
-  "homepage": "https://github.com/tinemlakar/ts-mysql-migrate#readme",
   "dependencies": {
     "@types/mysql": "^2.15.8",
     "mysql": "^2.18.1"
