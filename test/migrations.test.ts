@@ -22,7 +22,8 @@ beforeAll(async () => {
   migration = new Migration({
     conn: pool,
     tableName: 'migrations',
-    dir: `./test/migration-scripts/`
+    dir: `./test/migration-scripts/`,
+    silent: true
   });
 
   await migration.initialize();

@@ -23,7 +23,8 @@ beforeAll(async () => {
   migration = new Migration({
     conn: pool as unknown as mysql.Connection,
     tableName: 'migrations',
-    dir: `./test/migration-scripts/`
+    dir: `./test/migration-scripts/`,
+    silent: true
   });
 
   await migration.initialize();

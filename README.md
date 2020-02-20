@@ -8,7 +8,6 @@ This code is work in progress. Please test your upgrade and downgrade scripts we
 
 Please also note the following paragraph from License:
 
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,6 +21,7 @@ SOFTWARE.
 ```ssh
 npm i ts-mysql-migrate
 ```
+
 ## API
 
 ### initialize()
@@ -45,8 +45,6 @@ Runs all downgrade and upgrade migrations. Depending od your upgrade and downgra
 ### Create migration scripts
 
 Create migration scripts and name them with number prefix to set the order of execution (versions). Each migration script should have ```upgrade``` and ```downgrade``` functions exported. These functions must have ```queryFn``` as parameter - see examples below.
-
-
 
  Example: ```/src/migrations/1-init_db.ts```
 
@@ -102,7 +100,7 @@ Create scripts that will run your upgrade and/or downgrade migrations. You can w
 Example: ```/src/scripts/upgrade.ts``` (or ```/src/scripts/downgrade.ts```)
 
 ```ts
-import { Migration, MigrationConnection } from 'mysql-migrate';
+import { Migration, MigrationConnection } from 'ts-mysql-migrate';
 
 const run = async () => {
   
@@ -138,7 +136,7 @@ const poolConfig: ConnectionOptions = {
     database: process.env.DB_DATABASE,
   };
 
-  const pool = createPool(poolConfig);
+  const pool = createPool(poolConfig); // make sure that you are not using mysl2/promise lib
 
   const migration = new Migration({
     conn: pool as unknown as mysql.Connection,
@@ -149,7 +147,7 @@ const poolConfig: ConnectionOptions = {
   await migration.initialize();
   
   await migration.up();       // use for upgrade script
-  // await migration.down();  // use for downgrade script 
+  // await migration.down();  // use for downgrade script
   // await migration.reset(); // use for resetting database
 };
 
@@ -175,4 +173,3 @@ You can put them in ```package.json``` and run it from npm. Example:
     "downgrade-production": "node -r ts-node/register ./src/scripts/downgrade-prod.ts",
   },
 ```
-

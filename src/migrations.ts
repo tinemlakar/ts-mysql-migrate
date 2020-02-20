@@ -26,6 +26,10 @@ export interface MigrationConfig {
    * path to migration dir relative to module root
    */
   dir: string;
+  /**
+   * prevents conosle outputs
+   */
+  silent?: boolean;
 
 }
 
@@ -68,7 +72,7 @@ export class Migration {
       throw new Error('Migration class not initialized! Run initialize function first!');
     }
 
-    console.log('Starting upgrade migration!');
+    this.writeLog('Starting upgrade migration!');
 
     // get files to execute
     const infinite = (!steps || steps < 0);
@@ -81,16 +85,16 @@ export class Migration {
         if (ver != this.maxVersion) {
           throw new Error('Next upgrade script not found!');
         } else {
-          console.log('Upgrade complete!');
+          this.writeLog('Upgrade complete!');
           break;
         }
       } else if (script.upgrade) {
         // execute
-        console.log(`Step: ${countStep + 1}`);
-        console.log(`Upgrading to version ${script.version}...`);
+        this.writeLog(`Step: ${countStep + 1}`);
+        this.writeLog(`Upgrading to version ${script.version}...`);
         await script.upgrade(this.query.bind(this));
         await this.saveVersion(script);
-        console.log(`DB upgraded to version : ${script.version}`);
+        this.writeLog(`DB upgraded to version : ${script.version}`);
       }
       countStep++;
     }
@@ -107,7 +111,7 @@ export class Migration {
       throw new Error('Migration class not initialized! Run initialize function first!');
     }
 
-    console.log('Starting downgrade migration!');
+    this.writeLog('Starting downgrade migration!');
 
     // get files to execute
     const infinite = (!steps || steps < 0);
@@ -120,16 +124,16 @@ export class Migration {
         if (ver) {
           throw new Error('Next downgrade script not found!');
         } else {
-          console.log('Downgrade complete!');
+          this.writeLog('Downgrade complete!');
           break;
         }
       } else if (script.downgrade) {
         // execute
-        console.log(`Step: ${countStep + 1}`);
-        console.log(`Downgrading to version ${script.version - 1}...`);
+        this.writeLog(`Step: ${countStep + 1}`);
+        this.writeLog(`Downgrading to version ${script.version - 1}...`);
         await script.downgrade(this.query.bind(this));
         await this.deleteVersion(script);
-        console.log(`DB downgraded to version : ${script.version - 1}`);
+        this.writeLog(`DB downgraded to version : ${script.version - 1}`);
       }
       countStep++;
     }
@@ -163,12 +167,12 @@ export class Migration {
     let ver = 1;
 
     const fileArr = files.sort(this.sortFiles);
-    console.log(`Found migration scripts: ${fileArr.join(', ')}`);
+    this.writeLog(`Found migration scripts: ${fileArr.join(', ')}`);
 
     fileArr.forEach((file) => {
       let script;
       try { script = module.parent.parent.require(path.resolve(process.cwd(), dirPath, file)); } catch (e) {
-        console.log(`Unable to load script from ${file}! (${e})`);
+        this.writeLog(`Unable to load script from ${file}! (${e})`);
       }
 
       const isValid = (
@@ -226,7 +230,7 @@ export class Migration {
         )
       `, null, true);
     } catch (err) {
-      console.log('Failed to create table for migrations.');
+      this.writeLog('Failed to create table for migrations.');
       throw new Error(err);
     }
 
@@ -257,9 +261,7 @@ export class Migration {
    */
   private query(query: string, values?: any, silent = false): Promise<Array<any>> {
     const q = promisify(this.config.conn.query).bind(this.config.conn);
-    if (!silent) {
-      console.log(query);
-    }
+    this.writeLog(query, silent);
     return q(query, values);
   }
 
@@ -281,6 +283,12 @@ export class Migration {
       return -1;
     }
     return 0;
+  }
+
+  private writeLog(text: string, forceSilent?: boolean) {
+    if (!this.config.silent && !forceSilent) {
+      console.log(text);
+    }
   }
 
 }

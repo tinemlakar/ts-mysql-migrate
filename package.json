@@ -1,6 +1,6 @@
 {
   "name": "ts-mysql-migrate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Library for MySQL migrations",
   "declaration": true,
   "files": [
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tinemlakar/mysql-migrate.git"
+    "url": "git+https://github.com/tinemlakar/ts-mysql-migrate.git"
   },
   "keywords": [
     "mysql",
@@ -27,9 +27,9 @@
   "author": "Tine Mlakar",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tinemlakar/mysql-migrate/issues"
+    "url": "https://github.com/tinemlakar/ts-mysql-migrate/issues"
   },
-  "homepage": "https://github.com/tinemlakar/mysql-migrate#readme",
+  "homepage": "https://github.com/tinemlakar/ts-mysql-migrate#readme",
   "dependencies": {
     "@types/mysql": "^2.15.8",
     "mysql": "^2.18.1"
