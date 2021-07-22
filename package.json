@@ -1,6 +1,6 @@
 {
   "name": "ts-mysql-migrate",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Library for MySQL migrations",
   "author": "Tine Mlakar",
   "license": "MIT",
@@ -26,7 +26,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "jest --config jestconfig.json --detectOpenHandles",
+    "test": "jest --config jestconfig.json -i",
     "prepare": "npm run build",
     "lint": "tslint -p tsconfig.json"
   },

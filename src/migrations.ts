@@ -8,6 +8,7 @@ import { QueryFunction } from 'mysql';
  */
 export interface MigrationConnection {
   query: QueryFunction;
+  end(callback?: (err: Error | null) => void): void;
 }
 
 /**
@@ -49,7 +50,7 @@ export class Migration {
   private maxVersion = 0;
   private isInit = false;
 
-  public constructor (config: MigrationConfig) {
+  public constructor(config: MigrationConfig) {
     this.config = config;
     this.isInit = false;
   }
@@ -81,8 +82,8 @@ export class Migration {
     while (infinite || countStep < steps) {
       const script = await this.getNextUpgradeScript();
       if (!script) {
-        const ver = await this.getLastVersion();
-        if (ver != this.maxVersion) {
+        const { version } = await this.getLastVersion();
+        if (version != this.maxVersion) {
           throw new Error('Next upgrade script not found!');
         } else {
           this.writeLog('Upgrade complete!');
@@ -120,8 +121,8 @@ export class Migration {
     while (infinite || countStep < steps) {
       const script = await this.getNextDowngradeScript();
       if (!script) {
-        const ver = await this.getLastVersion();
-        if (ver) {
+        const { version } = await this.getLastVersion();
+        if (version) {
           throw new Error('Next downgrade script not found!');
         } else {
           this.writeLog('Downgrade complete!');
@@ -151,14 +152,28 @@ export class Migration {
   /**
    * Returns last version of database
    */
-  public async getLastVersion(): Promise<number> {
+  public async getLastVersion(): Promise<{ version: number, fileName: string }> {
     return await this.query(
-      `SELECT version
+      `SELECT version, fileName
       FROM ${this.config.tableName}
       ORDER BY version DESC
-      LIMIT 1`, null, true).then((val: any) => !!val && val.length ? val[0].version : 0);
+      LIMIT 1`, null, true
+    ).then(
+      (val: any) =>
+        !!val && val.length ?
+          { version: val[0].version, fileName: val[0].fileName } :
+          { version: 0, fileName: null }
+    );
   }
 
+  public async destroy() {
+    await new Promise<void>((resolve, reject) => {
+      this.config.conn.end((e) => {
+        this.writeLog(`Migrations: DB connection terminated: ${e?.message || 'CLOSED'}`);
+        resolve();
+      });
+    });
+  }
   /**
    * Loads scripts from file system
    */
@@ -195,9 +210,9 @@ export class Migration {
    * Returns next upgrade script object
    */
   private async getNextUpgradeScript(): Promise<MigrationScript> {
-    const ver = await this.getLastVersion();
+    const { version } = await this.getLastVersion();
     for (const script of this.scripts) {
-      if (script.version === (ver + 1)) {
+      if (script.version === (version + 1)) {
         return script;
       }
     }
@@ -208,9 +223,12 @@ export class Migration {
    * Returns next downgrade script object
    */
   private async getNextDowngradeScript(): Promise<MigrationScript> {
-    const ver = await this.getLastVersion();
+    const { version, fileName } = await this.getLastVersion();
     for (const script of this.scripts) {
-      if (script.version === (ver)) {
+      if (script.version === version) {
+        if (script.fileName !== fileName) {
+          throw new Error(`Script version and filename mismatch! version: ${version} -> file system: ${script.fileName} | database: ${fileName}`);
+        }
         return script;
       }
     }
@@ -269,8 +287,8 @@ export class Migration {
    * Sort migration files by prefix numbers.
    */
   private sortFiles(a: string, b: string): number {
-    const verA = a.match( /^(\d*)-/ )[1];
-    const verB = b.match( /^(\d*)-/ )[1];
+    const verA = a.match(/^(\d*)-/)[1];
+    const verB = b.match(/^(\d*)-/)[1];
 
     if (!parseInt(verA) || !parseInt(verB)) {
       return 0;
