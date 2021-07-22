@@ -40,6 +40,10 @@ Runs downgrade functions in migration scripts. Parameter ```step``` defines how 
 
 Runs all downgrade and upgrade migrations. Depending od your upgrade and downgrade scripts, this could be used to clean database of all data.
 
+### destroy()
+
+Closes database connection and releases handles.
+
 ## Guide
 
 ### Create migration scripts
@@ -149,6 +153,7 @@ const poolConfig: ConnectionOptions = {
   await migration.up();       // use for upgrade script
   // await migration.down();  // use for downgrade script
   // await migration.reset(); // use for resetting database
+  await migration.destroy();  // close db connection
 };
 
 run().catch((err) => {
