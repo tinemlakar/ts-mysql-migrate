@@ -83,7 +83,6 @@ test('Test reset', async () => {
 });
 
 test('Test fail invalid migrations', async () => {
-  await migration.reset();
   await expect(invalidMigration.down()).rejects.toThrow(/filename mismatch/);
 });
 
