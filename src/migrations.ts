@@ -3,6 +3,9 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { QueryFunction } from 'mysql';
 
+require('dotenv').config();
+
+
 /**
  * Database connection interface
  */
@@ -207,6 +210,17 @@ export class Migration {
     const notLoadedScripts = files.filter((file) => !loadedScripts.find((loadedScripts) => loadedScripts.fileName === file));
     
     const sortedNotLoadedScripts = notLoadedScripts.sort(this.sortFiles);
+
+    if(loadedScripts.length && sortedNotLoadedScripts.length) {
+      const lastLoadedScript = loadedScripts[loadedScripts.length - 1];
+      // Get timestamp from filename of both scripts
+      const lastLoadedScriptTimestamp = lastLoadedScript.fileName.match(/^(\d*)-/)[1];
+      const firstNotLoadedScriptTimestamp = sortedNotLoadedScripts[0].match(/^(\d*)-/)[1];
+      if(process.env.MODE === 'prod' && firstNotLoadedScriptTimestamp < lastLoadedScriptTimestamp) {
+        throw new Error('Check your migration scripts! You are trying to load a script with a lower timestamp than the last loaded script!');
+      }
+    }
+
     const fileArr = [...loadedScripts.map((script) => script.fileName), ...sortedNotLoadedScripts];
 
     this.writeLog(`Found migration scripts: ${fileArr.join(', ')}`);
