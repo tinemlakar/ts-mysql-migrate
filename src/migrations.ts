@@ -206,13 +206,13 @@ export class Migration {
     const files = await promisify(fs.readdir)(dirPath);
     let ver = 1;
 
-    const loadedScripts = await this.getLoadedScripts('asc');
-    const notLoadedScripts = files.filter((file) => !loadedScripts.find((loadedScripts) => loadedScripts.fileName === file));
+    const loaded = await this.getLoadedScripts('asc');
+    const notLoaded = files.filter((file) => !loaded.find((loadedScripts) => loadedScripts.fileName === file));
     
-    const sortedNotLoadedScripts = notLoadedScripts.sort(this.sortFiles);
+    const sortedNotLoadedScripts = notLoaded.sort(this.sortFiles);
 
-    if(loadedScripts.length && sortedNotLoadedScripts.length) {
-      const lastLoadedScript = loadedScripts[loadedScripts.length - 1];
+    if(loaded.length && sortedNotLoadedScripts.length) {
+      const lastLoadedScript = loaded[loaded.length - 1];
       // Get timestamp from filename of both scripts
       const lastLoadedScriptTimestamp = lastLoadedScript.fileName.match(/^(\d*)-/)[1];
       const firstNotLoadedScriptTimestamp = sortedNotLoadedScripts[0].match(/^(\d*)-/)[1];
@@ -221,7 +221,7 @@ export class Migration {
       }
     }
 
-    const fileArr = [...loadedScripts.map((script) => script.fileName), ...sortedNotLoadedScripts];
+    const fileArr = [...loaded.map((script) => script.fileName), ...sortedNotLoadedScripts];
 
     this.writeLog(`Found migration scripts: ${fileArr.join(', ')}`);
 

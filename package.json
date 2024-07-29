@@ -28,7 +28,8 @@
     "build": "tsc",
     "test": "jest --config jestconfig.json -i",
     "prepare": "npm run build",
-    "lint": "tslint -p tsconfig.json"
+    "lint": "tslint -p tsconfig.json",
+    "generate-migration": "node dist/generate-migration.js"
   },
   "dependencies": {
     "@types/mysql": "^2.15.8",
