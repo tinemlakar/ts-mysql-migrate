@@ -3,6 +3,9 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { QueryFunction } from 'mysql';
 
+require('dotenv').config();
+
+
 /**
  * Database connection interface
  */
@@ -47,7 +50,6 @@ export interface MigrationScript {
 export class Migration {
   private config: MigrationConfig;
   private scripts: MigrationScript[] = [];
-  private maxVersion = 0;
   private isInit = false;
 
   public constructor(config: MigrationConfig) {
@@ -62,6 +64,25 @@ export class Migration {
     await this.loadScripts(this.config.dir || 'migrations');
     await this.initMigrationTable();
     this.isInit = true;
+  }
+
+  public async generateNew(migrationName: string, timestamp?: number) {
+    const currentTimestamp = timestamp ?? new Date().getTime();
+    const migrationDir = this.config.dir;
+    const migrationNameWithTimestamp = `${currentTimestamp}-${migrationName}.ts`;
+    const migrationPath = path.resolve(process.cwd(), migrationDir, migrationNameWithTimestamp)
+    // Create file from the template with the given name
+    const template = `
+    export async function upgrade(queryFn: (query: string, values?: any[]) => Promise<Array<any>>) {
+    }
+    
+    export async function downgrade(queryFn: (query: string, values?: any[]) => Promise<Array<any>>) {
+    }
+    
+    `
+    fs.writeFileSync(migrationPath,template);
+    this.writeLog(`Migration file ${migrationNameWithTimestamp} created!`);
+    return migrationPath
   }
 
   /**
@@ -81,14 +102,10 @@ export class Migration {
     let countStep = 0;
     while (infinite || countStep < steps) {
       const script = await this.getNextUpgradeScript();
-      if (!script) {
-        const { version } = await this.getLastVersion();
-        if (version != this.maxVersion) {
-          throw new Error('Next upgrade script not found!');
-        } else {
+      if (!script) {       
           this.writeLog('Upgrade complete!');
           break;
-        }
+        
       } else if (script.upgrade) {
         // execute
         this.writeLog(`Step: ${countStep + 1}`);
@@ -166,6 +183,14 @@ export class Migration {
     );
   }
 
+  public async getLoadedScripts(sortDirection='desc'): Promise<{version: number, fileName: string}[]> {
+    return await this.query(
+      `SELECT version, fileName
+      FROM ${this.config.tableName}
+      ORDER BY version ${sortDirection}`, null, true
+    );
+  }
+
   public async destroy() {
     await new Promise<void>((resolve, reject) => {
       this.config.conn.end((e) => {
@@ -181,7 +206,23 @@ export class Migration {
     const files = await promisify(fs.readdir)(dirPath);
     let ver = 1;
 
-    const fileArr = files.sort(this.sortFiles);
+    const loaded = await this.getLoadedScripts('asc');
+    const notLoaded = files.filter((file) => !loaded.find((loadedScripts) => loadedScripts.fileName === file));
+    
+    const sortedNotLoadedScripts = notLoaded.sort(this.sortFiles);
+
+    if(loaded.length && sortedNotLoadedScripts.length) {
+      const lastLoadedScript = loaded[loaded.length - 1];
+      // Get timestamp from filename of both scripts
+      const lastLoadedScriptTimestamp = lastLoadedScript.fileName.match(/^(\d*)-/)[1];
+      const firstNotLoadedScriptTimestamp = sortedNotLoadedScripts[0].match(/^(\d*)-/)[1];
+      if(process.env.MIGRATIONS_STRICT_ORDER === 'true' && firstNotLoadedScriptTimestamp < lastLoadedScriptTimestamp) {
+        throw new Error('Check your migration scripts! You are trying to load a script with a lower timestamp than the last loaded script!');
+      }
+    }
+
+    const fileArr = [...loaded.map((script) => script.fileName), ...sortedNotLoadedScripts];
+
     this.writeLog(`Found migration scripts: ${fileArr.join(', ')}`);
 
     fileArr.forEach((file) => {
@@ -200,7 +241,6 @@ export class Migration {
         script.version = ver;
         script.fileName = file;
         this.scripts.push(script);
-        this.maxVersion = ver;
         ver++;
       }
     });
@@ -210,13 +250,9 @@ export class Migration {
    * Returns next upgrade script object
    */
   private async getNextUpgradeScript(): Promise<MigrationScript> {
-    const { version } = await this.getLastVersion();
-    for (const script of this.scripts) {
-      if (script.version === (version + 1)) {
-        return script;
-      }
-    }
-    return null;
+    const loadedScripts = await this.getLoadedScripts();
+    const firstNotLoadedScript = this.scripts.find((script) => !loadedScripts.find((loadedScripts) => loadedScripts.version === script.version));
+    return firstNotLoadedScript;
   }
 
   /**
