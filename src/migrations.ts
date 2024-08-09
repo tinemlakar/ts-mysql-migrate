@@ -216,7 +216,7 @@ export class Migration {
       // Get timestamp from filename of both scripts
       const lastLoadedScriptTimestamp = lastLoadedScript.fileName.match(/^(\d*)-/)[1];
       const firstNotLoadedScriptTimestamp = sortedNotLoadedScripts[0].match(/^(\d*)-/)[1];
-      if(process.env.MODE === 'prod' && firstNotLoadedScriptTimestamp < lastLoadedScriptTimestamp) {
+      if(process.env.MIGRATIONS_STRICT_ORDER === 'true' && firstNotLoadedScriptTimestamp < lastLoadedScriptTimestamp) {
         throw new Error('Check your migration scripts! You are trying to load a script with a lower timestamp than the last loaded script!');
       }
     }
