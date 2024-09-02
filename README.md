@@ -2,25 +2,35 @@
 
 MySQL migration tool for typescript projects. Supports mysqljs and node-mysql2 driver.
 
-## IMPORTANT NOTICE
-
-This code is work in progress. Please test your upgrade and downgrade scripts well before use it on production database!
-
-Please also note the following paragraph from License:
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
 ## Installation
 
 ```ssh
 npm i ts-mysql-migrate
 ```
+
+## Changelog
+
+### v1.1.0
+
+ Now it is possible to [generate migration scripts](#cli--support-for-timestamp) with timestamps in order not to create problems when merging from different branches. That was an annoying issue in larger teams working on same project.
+
+You can control behavior of strict order with environment variable `MIGRATIONS_STRICT_ORDER`. See [environment variables](#environment-variables) for details.
+
+## Environment variables
+
+This project utilizes environment variables to configure various aspects of the migration process. You can define these variables in a `.env` file at the root of your project. To use `.env` files, ensure the `dotenv` package is installed, as it is required for loading these variables into your environment.
+
+Here are some key environment variables used in this project:
+
+* **`MIGRATIONS_STRICT_ORDER`**: Ensures migration scripts follow a strict index/timeline order. Possible to override with passing `strictOrder` parameter to constructor. Default is `true` in production (`NODE_ENV='production'`), otherwise `false`.
+* **`MIGRATIONS_NUMERIC_ORDER`**: Enforces strict number order for migration scripts ordered by numbers. Should be disabled if scripts are prefixed with timestamps. Possible to override with passing `numOrder` parameter to constructor. Set to `false` by default.
+* **`MIGRATION_FOLDER`**: Specifies the default path to the migrations folder for the CLI script generator.
+* **Database Configuration  for running tests**:
+  * `DB_HOST`: Database host
+  * `DB_PORT`: Database port.
+  * `DB_USER`: Database user.
+  * `DB_PASSWORD`: Database password.
+  * `DB_DATABASE`: Database name.
 
 ## API
 
@@ -48,7 +58,9 @@ Closes database connection and releases handles.
 
 ### Create migration scripts
 
-Create migration scripts and name them with number prefix to set the order of execution (versions). Each migration script should have ```upgrade``` and ```downgrade``` functions exported. These functions must have ```queryFn``` as parameter - see examples below.
+Create migration scripts and name them with number prefix to set the order of execution (versions). In v2 you can also generate it with [CLI](#cli--support-for-timestamp) to have a timestamp as identifier.
+
+Each migration script should have ```upgrade``` and ```downgrade``` functions exported. These functions must have ```queryFn``` as parameter - see examples below.
 
  Example: ```/src/migrations/1-init_db.ts```
 
@@ -178,3 +190,46 @@ You can put them in ```package.json``` and run it from npm. Example:
     "downgrade-production": "node -r ts-node/register ./src/scripts/downgrade-prod.ts",
   },
 ```
+
+## CLI & support for timestamp
+
+> New in v2.
+
+You can now save script names with any number as a prefix - this is meant to be used with unix timestamp. To generate script with current timestamp, you must instal CLI by installing this package globally
+
+```sh
+npm i ts-mysql-migrate -g
+```
+
+You can then call command in the root of your project.
+
+```sh
+generate-migration
+```
+
+You can set the env variable `MIGRATION_FOLDER` to customize default or even set script in your `package.json` for example:
+
+```json
+{
+  "scripts":{
+    "new-migration": "cross-env MIGRATION_FOLDER=my-migration-folder generate-migration"
+  }
+}
+
+```
+
+and then just call `npm run new-migration` when you'd like to create new migration.
+
+## IMPORTANT NOTICE
+
+Please test your upgrade and downgrade scripts well before use it on production database!
+
+Please also note the following paragraph from License:
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

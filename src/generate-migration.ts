@@ -1,36 +1,38 @@
 #!/usr/bin/env node
 
-import path = require("path");
-import * as fs from "fs";
+import { createNewTsMigrationScript } from './common';
 
-const migrationTemplate = `
-export async function upgrade(queryFn: (query: string, values?: any[]) => Promise<void>) {
-  await queryFn(\`\`);
-}
-    
-export async function downgrade(queryFn: (query: string, values?: any[]) => Promise<void>) {
-  await queryFn(\`\`);
-}
-`;
+try {
+  require('dotenv').config();
+} catch (err) {}
 
-async function run(){
+let migrationFolder = process.env.MIGRATION_FOLDER ?? 'migration-scripts';
+
+async function run() {
   process.stdin.setEncoding('utf8');
 
-  console.log('Please enter the migration name:');
+  console.log(
+    `Please enter the migration folder name. Will be created if doesn't exists [default: ${migrationFolder}]:`
+  );
 
-  process.stdin.on('data', (migrationName: string) => {
-    migrationName = migrationName.trim(); // Remove the newline at the end
-    const timestamp = new Date().getTime();
-    const migrationFileName = `${timestamp}-${migrationName}.ts`;
-    const migrationFilePath = path.join(process.env.MIGRATION_FOLDER ?? "migration-scripts", migrationFileName);
-    console.log(`Creating migration file at ${migrationFilePath}`);
-    fs.writeFileSync(migrationFilePath, migrationTemplate);
-    console.log(`Migration file created at ${migrationFilePath}`);
-    process.exit(0);
+  process.stdin.once('data', (folder: string) => {
+    migrationFolder = folder.trim() || migrationFolder;
+
+    console.log('Please enter the migration name [default: sql_migration]:');
+    process.stdin.once('data', (migrationName: string) => {
+      migrationName = migrationName.trim() || 'sql_migration'; // Remove the newline at the end
+
+      const migrationFilePath = createNewTsMigrationScript(
+        migrationFolder,
+        migrationName
+      );
+      console.log(`Migration file created at ${migrationFilePath}`);
+      process.exit(0);
+    });
   });
 }
 
 run().catch((err) => {
-    console.error(err);
-    process.exit(1);
-}) 
+  console.error(err);
+  process.exit(1);
+});
