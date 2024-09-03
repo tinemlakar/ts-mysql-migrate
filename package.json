@@ -1,6 +1,6 @@
 {
   "name": "ts-mysql-migrate",
-  "version": "1.1.0-beta.0",
+  "version": "1.1.0",
   "description": "Library for MySQL migrations",
   "author": "Tine Mlakar",
   "license": "MIT",
