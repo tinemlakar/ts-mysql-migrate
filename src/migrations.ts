@@ -196,6 +196,9 @@ export class Migration {
     );
   }
 
+  /**
+   * Get loaded scripts from database
+   */
   public async getLoadedScripts(
     sortDirection = 'desc'
   ): Promise<{ version: number; fileName: string }[]> {
@@ -208,6 +211,9 @@ export class Migration {
     );
   }
 
+  /**
+   * close the database connections
+   */
   public async destroy() {
     await new Promise<void>((resolve, reject) => {
       this.config.conn.end((e) => {
@@ -231,23 +237,6 @@ export class Migration {
     );
 
     const sortedNotLoadedScripts = notLoaded.sort(this.sortFiles);
-
-    // if (loaded.length && sortedNotLoadedScripts.length) {
-    //   const lastLoadedScript = loaded[loaded.length - 1];
-    //   // Get timestamp from filename of both scripts
-    //   const lastLoadedScriptTimestamp =
-    //     lastLoadedScript.fileName.match(/^(\d*)-/)[1];
-    //   const firstNotLoadedScriptTimestamp =
-    //     sortedNotLoadedScripts[0].match(/^(\d*)-/)[1];
-    //   if (
-    //     process.env.MIGRATIONS_STRICT_ORDER === 'true' &&
-    //     firstNotLoadedScriptTimestamp < lastLoadedScriptTimestamp
-    //   ) {
-    //     throw new Error(
-    //       'Check your migration scripts! You are trying to load a script with a lower timestamp than the last loaded script!'
-    //     );
-    //   }
-    // }
 
     const fileArr = [
       ...loaded.map((script) => script.fileName),
