@@ -195,13 +195,19 @@ You can put them in ```package.json``` and run it from npm. Example:
 
 > New in v2.
 
-You can now save script names with any number as a prefix - this is meant to be used with unix timestamp. To generate script with current timestamp, you must instal CLI by installing this package globally
+You can now save script names with any number as a prefix - this is meant to be used with unix timestamp. To generate script with current timestamp, you can run CLI command from local installation by running
+
+```sh
+npx generate-migration
+```
+
+Alternatively you can also install package globally
 
 ```sh
 npm i ts-mysql-migrate -g
 ```
 
-You can then call command in the root of your project.
+Then you can call the command in the root of your project.
 
 ```sh
 generate-migration
