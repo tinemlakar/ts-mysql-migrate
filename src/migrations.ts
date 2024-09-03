@@ -3,6 +3,10 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { QueryFunction } from 'mysql';
 
+try {
+  require('dotenv').config();
+} catch (err) {}
+
 /**
  * Database connection interface
  */
@@ -31,7 +35,14 @@ export interface MigrationConfig {
    * prevents console outputs
    */
   silent?: boolean;
-
+  /**
+   * override default MIGRATIONS_STRICT_ORDER flag
+   */
+  strictOrder?: boolean;
+  /**
+   * override default MIGRATIONS_NUMERIC_ORDER flag
+   */
+  numOrder?: boolean;
 }
 
 /**
@@ -40,8 +51,12 @@ export interface MigrationConfig {
 export interface MigrationScript {
   version: number;
   fileName: string;
-  upgrade?(queryFn?: (query: string, value: any[]) => Promise<Array<any>>): (any | Promise<any>);
-  downgrade?(queryFn?: (query: string, value: any[]) => Promise<Array<any>>): (any | Promise<any>);
+  upgrade?(
+    queryFn?: (query: string, value: any[]) => Promise<Array<any>>
+  ): any | Promise<any>;
+  downgrade?(
+    queryFn?: (query: string, value: any[]) => Promise<Array<any>>
+  ): any | Promise<any>;
 }
 
 export class Migration {
@@ -49,18 +64,27 @@ export class Migration {
   private scripts: MigrationScript[] = [];
   private maxVersion = 0;
   private isInit = false;
+  private strictOrder = !!process.env.MIGRATIONS_STRICT_ORDER
+    ? process.env.MIGRATIONS_STRICT_ORDER?.toLowerCase() === 'true'
+    : process.env.NODE_ENV?.toLowerCase() === 'production';
+  private numOrder =
+    process.env.MIGRATIONS_NUMERIC_ORDER?.toLowerCase() === 'true';
 
   public constructor(config: MigrationConfig) {
     this.config = config;
     this.isInit = false;
+    this.strictOrder =
+      config.strictOrder !== undefined ? config.strictOrder : this.strictOrder;
+    this.numOrder =
+      config.numOrder !== undefined ? config.numOrder : this.numOrder;
   }
 
   /**
    * Migrator initialization function. Must be awaited before other functions can be run.
    */
   public async initialize() {
-    await this.loadScripts(this.config.dir || 'migrations');
     await this.initMigrationTable();
+    await this.loadScripts(this.config.dir || 'migrations');
     this.isInit = true;
   }
 
@@ -70,13 +94,15 @@ export class Migration {
    */
   public async up(steps?: number) {
     if (!this.isInit) {
-      throw new Error('Migration class not initialized! Run initialize function first!');
+      throw new Error(
+        'Migration class not initialized! Run initialize function first!'
+      );
     }
 
     this.writeLog('Starting upgrade migration!');
 
     // get files to execute
-    const infinite = (!steps || steps < 0);
+    const infinite = !steps || steps < 0;
 
     let countStep = 0;
     while (infinite || countStep < steps) {
@@ -99,7 +125,6 @@ export class Migration {
       }
       countStep++;
     }
-
   }
 
   /**
@@ -109,13 +134,15 @@ export class Migration {
    */
   public async down(steps = 1) {
     if (!this.isInit) {
-      throw new Error('Migration class not initialized! Run initialize function first!');
+      throw new Error(
+        'Migration class not initialized! Run initialize function first!'
+      );
     }
 
     this.writeLog('Starting downgrade migration!');
 
     // get files to execute
-    const infinite = (!steps || steps < 0);
+    const infinite = !steps || steps < 0;
 
     let countStep = 0;
     while (infinite || countStep < steps) {
@@ -138,7 +165,6 @@ export class Migration {
       }
       countStep++;
     }
-
   }
 
   /**
@@ -152,24 +178,48 @@ export class Migration {
   /**
    * Returns last version of database
    */
-  public async getLastVersion(): Promise<{ version: number, fileName: string }> {
+  public async getLastVersion(): Promise<{
+    version: number;
+    fileName: string;
+  }> {
     return await this.query(
       `SELECT version, fileName
       FROM ${this.config.tableName}
       ORDER BY version DESC
-      LIMIT 1`, null, true
-    ).then(
-      (val: any) =>
-        !!val && val.length ?
-          { version: val[0].version, fileName: val[0].fileName } :
-          { version: 0, fileName: null }
+      LIMIT 1`,
+      null,
+      true
+    ).then((val: any) =>
+      !!val && val.length
+        ? { version: val[0].version, fileName: val[0].fileName }
+        : { version: 0, fileName: null }
     );
   }
 
+  /**
+   * Get loaded scripts from database
+   */
+  public async getLoadedScripts(
+    sortDirection = 'desc'
+  ): Promise<{ version: number; fileName: string }[]> {
+    return await this.query(
+      `SELECT version, fileName
+      FROM ${this.config.tableName}
+      ORDER BY version ${sortDirection}`,
+      null,
+      true
+    );
+  }
+
+  /**
+   * close the database connections
+   */
   public async destroy() {
     await new Promise<void>((resolve, reject) => {
       this.config.conn.end((e) => {
-        this.writeLog(`Migrations: DB connection terminated: ${e?.message || 'CLOSED'}`);
+        this.writeLog(
+          `Migrations: DB connection terminated: ${e?.message || 'CLOSED'}`
+        );
         resolve();
       });
     });
@@ -181,20 +231,52 @@ export class Migration {
     const files = await promisify(fs.readdir)(dirPath);
     let ver = 1;
 
-    const fileArr = files.sort(this.sortFiles);
+    const loaded = await this.getLoadedScripts('asc');
+    const notLoaded = files.filter(
+      (file) => !loaded.find((loadedScripts) => loadedScripts.fileName === file)
+    );
+
+    const sortedNotLoadedScripts = notLoaded.sort(this.sortFiles);
+
+    const fileArr = [
+      ...loaded.map((script) => script.fileName),
+      ...sortedNotLoadedScripts,
+    ];
+
     this.writeLog(`Found migration scripts: ${fileArr.join(', ')}`);
+
+    let previousFilePrefix = null;
 
     fileArr.forEach((file) => {
       let script;
-      try { script = module.parent.parent.require(path.resolve(process.cwd(), dirPath, file)); } catch (e) {
+      try {
+        script = module.parent.parent.require(
+          path.resolve(process.cwd(), dirPath, file)
+        );
+      } catch (e) {
         this.writeLog(`Unable to load script from ${file}! (${e})`);
+        // typescript/javascript file are expected to load successfully from folder
+        if (/(\.js|\.ts|\.jsx|\.jsm)$/.test(file)) {
+          throw e;
+        }
       }
 
-      const isValid = (
-        !!script
-        && typeof script.upgrade !== 'undefined'
-        && typeof script.downgrade !== 'undefined'
-      );
+      // strict versions check
+      const filePrefix = file.match(/^(\d*)-/)[1];
+      if (
+        previousFilePrefix &&
+        ((this.strictOrder && filePrefix < previousFilePrefix) ||
+          (this.numOrder && +previousFilePrefix + 1 !== +filePrefix))
+      ) {
+        throw new Error(
+          'Check your migration scripts! You are trying to load a script with a lower timestamp or version index than the last loaded script!'
+        );
+      }
+
+      const isValid =
+        !!script &&
+        typeof script.upgrade !== 'undefined' &&
+        typeof script.downgrade !== 'undefined';
 
       if (isValid) {
         script.version = ver;
@@ -202,6 +284,7 @@ export class Migration {
         this.scripts.push(script);
         this.maxVersion = ver;
         ver++;
+        previousFilePrefix = filePrefix;
       }
     });
   }
@@ -212,7 +295,7 @@ export class Migration {
   private async getNextUpgradeScript(): Promise<MigrationScript> {
     const { version } = await this.getLastVersion();
     for (const script of this.scripts) {
-      if (script.version === (version + 1)) {
+      if (script.version === version + 1) {
         return script;
       }
     }
@@ -227,7 +310,9 @@ export class Migration {
     for (const script of this.scripts) {
       if (script.version === version) {
         if (script.fileName !== fileName) {
-          throw new Error(`Script version and filename mismatch! version: ${version} -> file system: ${script.fileName} | database: ${fileName}`);
+          throw new Error(
+            `Script version and filename mismatch! version: ${version} -> file system: ${script.fileName} | database: ${fileName}`
+          );
         }
         return script;
       }
@@ -240,18 +325,22 @@ export class Migration {
    */
   private async initMigrationTable() {
     try {
-      await this.query(`
+      await this.query(
+        `
         CREATE TABLE IF NOT EXISTS ${this.config.tableName} (
-          version INT NULL,
+          version INT NOT NULL,
           fileName VARCHAR(256),
-          date DATETIME DEFAULT CURRENT_TIMESTAMP
+          date DATETIME DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (version)
         )
-      `, null, true);
+      `,
+        null,
+        true
+      );
     } catch (err) {
       this.writeLog('Failed to create table for migrations.');
       throw new Error(err);
     }
-
   }
 
   /**
@@ -261,7 +350,10 @@ export class Migration {
     return await this.query(
       `INSERT INTO ${this.config.tableName} (version, fileName)
        VALUES (${script.version}, '${script.fileName}')
-      `, null, true);
+      `,
+      null,
+      true
+    );
   }
 
   /**
@@ -271,16 +363,23 @@ export class Migration {
     return await this.query(
       `DELETE FROM ${this.config.tableName}
        WHERE version = ${script.version}
-      `, null, true);
+      `,
+      null,
+      true
+    );
   }
 
   /**
    * Allows async calls of native query function
    */
-  private query(query: string, values?: any, silent = false): Promise<Array<any>> {
+  private async query(
+    query: string,
+    values?: any,
+    silent = false
+  ): Promise<Array<any>> {
     const q = promisify(this.config.conn.query).bind(this.config.conn);
     this.writeLog(query, silent);
-    return q(query, values);
+    return await q(query, values);
   }
 
   /**
@@ -308,5 +407,4 @@ export class Migration {
       console.log(text);
     }
   }
-
 }

@@ -12,10 +12,12 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "inlineSources": true,
-    "experimentalDecorators": true,   
+    "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "plugins": [
-      { "name": "typescript-tslint-plugin" }
+      {
+        "name": "typescript-tslint-plugin"
+      }
     ]
   },
   "include": [
