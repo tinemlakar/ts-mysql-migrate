@@ -193,7 +193,7 @@ You can put them in ```package.json``` and run it from npm. Example:
 
 ## CLI & support for timestamp
 
-> New in v2.
+> New in v1.1.x
 
 You can now save script names with any number as a prefix - this is meant to be used with unix timestamp. To generate script with current timestamp, you can run CLI command from local installation by running
 

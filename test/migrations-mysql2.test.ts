@@ -188,7 +188,7 @@ describe('Timestamp migrations', () => {
       conn: pool3 as unknown as mysql.Connection,
       tableName: 'ts_migrations',
       dir: `./test/time-migrations/`,
-      silent: false,
+      silent: true,
       strictOrder: true,
     });
     await timestampMigration.initialize();
@@ -211,12 +211,36 @@ describe('Timestamp migrations', () => {
       conn: pool3 as unknown as mysql.Connection,
       tableName: 'ts_migrations',
       dir: `./test/time-migrations/`,
-      silent: false,
+      silent: true,
       strictOrder: true,
     });
 
     await expect(failedMigration.initialize()).rejects.toThrow(
       /lower timestamp or version index/
     );
+  });
+
+  describe('Empty folder test', () => {
+    let emptyMigrations: Migration;
+
+    const pool6 = createPool(poolConfig);
+    beforeAll(async () => {
+      emptyMigrations = new Migration({
+        conn: pool6 as unknown as mysql.Connection,
+        tableName: 'empty_migrations',
+        dir: `./test/empty-folder/`,
+        silent: true,
+      });
+      await emptyMigrations.initialize();
+    });
+    afterAll(async () => {
+      await emptyMigrations.destroy();
+    });
+    test('Run migrations in empty folder with .gitkeep file', async () => {
+      await emptyMigrations.up();
+      await emptyMigrations.down(-1);
+      console.log('Done!');
+      expect(1).toBe(1);
+    });
   });
 });

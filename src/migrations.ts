@@ -262,8 +262,11 @@ export class Migration {
       }
 
       // strict versions check
-      const filePrefix = file.match(/^(\d*)-/)[1];
+      const filePrefix = file.match(/^(\d*)-/)
+        ? file.match(/^(\d*)-/)[1]
+        : null;
       if (
+        filePrefix &&
         previousFilePrefix &&
         ((this.strictOrder && filePrefix < previousFilePrefix) ||
           (this.numOrder && +previousFilePrefix + 1 !== +filePrefix))
@@ -284,7 +287,7 @@ export class Migration {
         this.scripts.push(script);
         this.maxVersion = ver;
         ver++;
-        previousFilePrefix = filePrefix;
+        previousFilePrefix = filePrefix || previousFilePrefix;
       }
     });
   }
