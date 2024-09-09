@@ -268,7 +268,7 @@ export class Migration {
       if (
         filePrefix &&
         previousFilePrefix &&
-        ((this.strictOrder && filePrefix < previousFilePrefix) ||
+        ((this.strictOrder && +filePrefix < +previousFilePrefix) ||
           (this.numOrder && +previousFilePrefix + 1 !== +filePrefix))
       ) {
         throw new Error(
