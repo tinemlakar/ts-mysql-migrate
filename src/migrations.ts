@@ -250,9 +250,9 @@ export class Migration {
     fileArr.forEach((file) => {
       let script;
       try {
-        script = module.parent.parent.require(
+        script = {...module.parent.parent.require(
           path.resolve(process.cwd(), dirPath, file)
-        );
+        )};
       } catch (e) {
         this.writeLog(`Unable to load script from ${file}! (${e})`);
         // typescript/javascript file are expected to load successfully from folder
